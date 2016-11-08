@@ -1,5 +1,5 @@
 <?php
-namespace dekuan\deimgsrv;
+namespace dekuan\deimgsrv\lib;
 
 use dekuan\defileup\CFileUploader;
 
@@ -71,6 +71,7 @@ class CImageFile {
 		$nErrCode = $cUpf->saveUploadFile( $sPath );
 		if( CErrCode::ERR_SUCC == $nErrCode ) {
 			$arrPara[ 'filepath' ] = $sPath;
+			$arrPara[ 'filename' ] = $sFileName;
 		}
 
 		return $nErrCode;
@@ -266,13 +267,13 @@ class CImageFile {
 			$arrPathInfo = pathinfo( $sFilePath );
 			if ( is_array( $arrPathInfo ) )
 			{
-				if ( array_key_exists( PATHINFO_EXTENSION, $arrPathInfo ) )
+				if ( array_key_exists( 'extension', $arrPathInfo ) )
 				{
-					if ( is_string( $arrPathInfo[ PATHINFO_EXTENSION ] )
-						&& strlen( $arrPathInfo[ PATHINFO_EXTENSION ] ) > 0
+					if ( is_string( $arrPathInfo[ 'extension' ] )
+						&& strlen( $arrPathInfo[ 'extension' ] ) > 0
 					)
 					{
-						$sExt = $arrPathInfo[ PATHINFO_EXTENSION ];
+						$sExt = $arrPathInfo[ 'extension' ];
 					}
 					else
 					{
@@ -289,11 +290,16 @@ class CImageFile {
 		return $sExt;
 	}
 
+	public static function getDefaultFileName( $sFilePath )
+	{
+		return self::_getTmpFileName();
+	}
+
 
 	private static function _getTmpFileName()
 	{
 		$sBaseName = md5( microtime( true )  . rand( 10000, 99999 ) );
-		$sExtension = 'jpg';
+		$sExtension = '.jpg';
 		$sFileName = $sBaseName . $sExtension;
 
 		return $sFileName;

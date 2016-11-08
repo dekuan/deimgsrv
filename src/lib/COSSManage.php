@@ -1,5 +1,5 @@
 <?php
-namespace dekuan\deimgsrv;
+namespace dekuan\deimgsrv\lib;
 
 use OSS\OssClient;
 
@@ -19,14 +19,16 @@ class COSSManage {
 	 * <li> 'AccessKeySecret'	: [必须]获取的token中accessKeySecret
 	 * <li> 'SecurityToken'		: [必须]获取的token
 	 * $arrPara参数信息
-	 * <li> 'timeout'			: [非必须]网络请求超时时间,默认5秒
-	 * <li> 'filepath'			: [必须]上传文件的文件路径信息
-	 * <li> 'filename'			: [非必须]上传文件的文件名,也做为oss对象名;不存在则从filepath中提取,不能为空字符串
-	 * <li> 'bucket'			: [必须]要上传文件至阿里云指定的bucket名
-	 * <li> 'useinner'			: [非必须]上传文件是否使用内网;CConst::CONST_USE_INNER使用内网,CConst::CONST_NOT_USE_INNER使用外网
-	 * 								默认:CConst::CONST_DEFAULT_IF_USE_INNER;
 	 * <li> 'bktinnerurl'		: [必须]要上传到的bucket内网地址
 	 * <li> 'bkturl'			: [必须]要上传到的bucket外网地址
+	 * <li> 'domain'			: [必须]bucket访问自定义url
+	 * <li> 'filepath'			: [必须]上传文件的文件路径信息
+	 * <li> 'bucket'			: [必须]要上传文件至阿里云指定的bucket名
+	 * <li> 'timeout'			: [非必须]网络请求超时时间,默认5秒
+	 * <li> 'filename'			: [非必须]上传文件的文件名,也做为oss对象名;不存在则调用实例方法,获得文件名,不能为空字符串
+	 * <li> 'useinner'			: [非必须]上传文件是否使用内网;CConst::CONST_USE_INNER使用内网,CConst::CONST_NOT_USE_INNER使用外网
+	 * 								默认:使用内网;
+
 	 * $arrRtn返回信息
 	 * <li> 'imgid'				: 上传的oss对象名
 	 * <li> 'ext'				: 上传图片的扩展名
@@ -93,21 +95,26 @@ class COSSManage {
 			return CErrCode::ERR_PUT_OSS_PARA_FILE_PATH;
 		}
 
-		$sFileName = array_key_exists( 'filename', $arrPara ) ?
-			$arrPara[ 'filename' ] : $this->m_oImgFile->getFileNameWithFilePath( $sFilePath );
-		if ( ! is_string( $sFileName ) || strlen( $sFileName ) <= 0 )
+		$sFileName = array_key_exists( 'filename', $arrPara ) ? $arrPara[ 'filename' ] : null;
+		if ( ! is_null( $sFileName ) && ( ! is_string( $sFileName ) || strlen( $sFileName ) <= 0 ) )
 		{
 			return CErrCode::ERR_PUT_OSS_PARA_FILE_NAME;
 		}
+		else if ( is_null( $sFileName ) )
+		{
+			//	生成随机fileName,保存
+			$sFileName = $this->m_oImgFile->getDefaultFileName( $sFilePath );
+			$arrPara[ 'filename' ] = $sFileName;
+		}
 
 		$sBucketName = array_key_exists( 'bucket', $arrPara ) ?
-			array_key_exists( 'bucket', $arrPara ) : CConst::CONST_IMG_BUCKET;
+			$arrPara[ 'bucket' ] : CDeImgConst::CONST_IMG_BUCKET;
 		if ( ! is_string( $sBucketName ) || strlen( $sBucketName ) <= 0 )
 		{
 			return CErrCode::ERR_PUT_OSS_PARA_BUCKET;
 		}
 
-		$nUseInner = array_key_exists( 'useinner', $arrPara ) ? $arrPara[ 'useinner' ] : CConst::CONST_DEFAULT_IF_USE_INNER;
+		$nUseInner = array_key_exists( 'useinner', $arrPara ) ? $arrPara[ 'useinner' ] : CDeImgConst::CONST_DEFAULT_IF_USE_INNER;
 		if ( ! is_numeric( $nUseInner ) )
 		{
 			return CErrCode::ERR_PUT_OSS_PARA_USE_INNER;
@@ -128,7 +135,7 @@ class COSSManage {
 		$nErrCode = CErrCode::ERR_UNKNOWN;
 
 		$sEndPoint = '';
-		if ( CConst::CONST_USE_INNER == $nUseInner )
+		if ( CDeImgConst::CONST_USE_INNER == $nUseInner )
 		{
 			$sEndPoint = $sImgBktInnerUrl;
 		}

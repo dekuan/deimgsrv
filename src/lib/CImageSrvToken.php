@@ -1,6 +1,6 @@
 <?php
 
-namespace dekuan\deimgsrv;
+namespace dekuan\deimgsrv\lib;
 
 
 use dekuan\vdata\CRequest;
@@ -14,7 +14,8 @@ class CImageSrvToken {
 	 * 如果不存在,去图片服务器获得对应权限的新token并保存到本地
 	 * $arrPara字段:
 	 * <li> 'appid'		: [必须]需要获取token的appid,根据appid可以获得不同权限的token
-	 * <li> 'url'		: [必须]获取token的服务器host
+	 * <li> 'security'	: [必须]需要获取token的appid对应的安全码
+	 * <li> 'url'		: [非必须]获取token的服务器host,默认img.dekuan.org
 	 * <li> 'timeout'	: [非必须]请求超时时间,默认5秒
 	 *
 	 * @author wanganning
@@ -39,17 +40,22 @@ class CImageSrvToken {
 			return CErrCode::ERR_TOKEN_GET_PARA_APP_ID;
 		}
 
+		$sSecurity = array_key_exists( 'security', $arrPara ) ? $arrPara[ 'security' ] : null;
+		if ( ! is_string( $sSecurity ) || strlen( $sSecurity ) <= 0 )
+		{
+			return CErrCode::ERR_TOKEN_GET_PARA_APP_SECURITY;
+		}
+
 		$nErrCode = CErrCode::ERR_UNKNOWN;
 
 		$sAppId = $arrPara[ 'appid' ];
 		$arrFileToken = null;
-		require_once dirname( __FILE__ ) . '/../token.php';
+		require dirname( __FILE__ ) . '/../token.php';
 
 		if ( ! is_array( $arrFileToken ) || ! self::checkFileToken( $sAppId, $arrFileToken ) )
 		{
 			//	调用接口获得token
 			$arrToken = [];
-			$arrPara[ 'uri' ] = CConst::CONST_SRV_URI_TOKEN;
 			$nErrCode = self::_getTokenFromSrv( $arrPara, $arrToken );
 
 			if ( CErrCode::ERR_SUCC == $nErrCode )
@@ -116,26 +122,29 @@ class CImageSrvToken {
 			return false;
 		}
 
-		return is_array( $arrToken )
-		&& array_key_exists( CConst::CONST_ACCESS_KEY_ID, $arrToken )
-		&& is_string( $arrToken[ CConst::CONST_ACCESS_KEY_ID ] )
-		&& array_key_exists( CConst::CONST_ACCESS_KEY_SECRET, $arrToken )
-		&& is_string( $arrToken[ CConst::CONST_ACCESS_KEY_SECRET ] )
-		&& array_key_exists( CConst::CONST_TOKEN_EXPIRATION, $arrToken )
-		&& is_numeric( $arrToken[ CConst::CONST_TOKEN_EXPIRATION ] )
-		&& array_key_exists( CConst::CONST_TOKEN, $arrToken )
-		&& is_string( $arrToken[ CConst::CONST_TOKEN ] )
-		&& ( $arrToken[ CConst::CONST_TOKEN_EXPIRATION ] - time() >  CConst::CONST_EXPIRATION_MIN_TIME );
+		$bRtn = is_array( $arrToken )
+		&& array_key_exists( CDeImgConst::CONST_ACCESS_KEY_ID, $arrToken )
+		&& is_string( $arrToken[ CDeImgConst::CONST_ACCESS_KEY_ID ] )
+		&& array_key_exists( CDeImgConst::CONST_ACCESS_KEY_SECRET, $arrToken )
+		&& is_string( $arrToken[ CDeImgConst::CONST_ACCESS_KEY_SECRET ] )
+		&& array_key_exists( CDeImgConst::CONST_TOKEN_EXPIRATION, $arrToken )
+		&& is_string( $arrToken[ CDeImgConst::CONST_TOKEN_EXPIRATION ] )
+		&& array_key_exists( CDeImgConst::CONST_TOKEN, $arrToken )
+		&& is_string( $arrToken[ CDeImgConst::CONST_TOKEN ] )
+		&& ( strtotime( $arrToken[ CDeImgConst::CONST_TOKEN_EXPIRATION ] ) - time() >  CDeImgConst::CONST_EXPIRATION_MIN_TIME );
+
+		return $bRtn;
 	}
 
 
 	/**
 	 * 从图片服务器获得token信息
 	 * $arrPara中需要的参数信息:
-	 * <li> 'url' 		: [必需]请求的图片服务host,
-	 * <li> 'uri' 		: [必需]获得token的接口uri
+	 * <li> 'url' 		: [非必需]请求的图片服务host,默认img.dekuan.org,
+	 * <li> 'uri' 		: [非必需]获得token的接口uri,默认'/gettoken'
 	 * <li> 'timeout'	: [非必需]接口请求超时时间,默认5秒
 	 * <li> 'appid'		: [必需]请求接口的appid,根据appid决定返回的token权限
+	 * <li> 'security'	: [必需]请求接口appid对应的安全校验码
 	 *
 	 * @author wanganning
 	 * @modify-log
@@ -154,20 +163,20 @@ class CImageSrvToken {
 			return CErrCode::ERR_TOKEN_METHOD_PARA;
 		}
 
-		$sUrl = array_key_exists( 'url', $arrPara ) ? $arrPara[ 'url' ] : null;
+		$sUrl = array_key_exists( 'url', $arrPara ) ? $arrPara[ 'url' ] : CDeImgConst::URL_IMG_CENTER;
 		if ( ! is_string( $sUrl ) || strlen( $sUrl ) <= 0 )
 		{
 			return CErrCode::ERR_TOKEN_REQUEST_URL;
 		}
 
-		$sUri = array_key_exists( 'uri', $arrPara ) ? $arrPara[ 'uri' ] : null;
-		if ( ! is_string( $arrPara[ 'uri' ] ) || strlen( $arrPara[ 'uri' ] ) <= 0 )
+		$sUri = array_key_exists( 'uri', $arrPara ) ? $arrPara[ 'uri' ] : CDeImgConst::CONST_SRV_URI_TOKEN;
+		if ( ! is_string( $sUri ) || strlen( $sUri ) <= 0 )
 		{
 			return CErrCode::ERR_TOKEN_REQUEST_URI;
 		}
 
 		$nTimeOut = array_key_exists( 'timeout', $arrPara ) ? $arrPara[ 'timeout' ] : 5;
-		if ( ! is_numeric( $arrPara[ 'timeout' ] ) || $arrPara[ 'timeout' ] <= 0 )
+		if ( ! is_numeric( $nTimeOut ) || $nTimeOut <= 0 )
 		{
 			return CErrCode::ERR_TOKEN_REQUEST_TIMEOUT;
 		}
@@ -176,6 +185,12 @@ class CImageSrvToken {
 		if ( ! is_string( $sAppID ) || strlen( $sAppID ) <= 0 )
 		{
 			return CErrCode::ERR_TOKEN_REQUEST_APP_ID;
+		}
+
+		$sSecurity = array_key_exists( 'security', $arrPara ) ? $arrPara[ 'security' ] : null;
+		if ( ! is_string( $sSecurity ) || strlen( $sSecurity ) <= 0 )
+		{
+			return CErrCode::ERR_TOKEN_REQUEST_APP_SECURITY;
 		}
 
 		$nErrCode = CErrCode::ERR_UNKNOWN;
@@ -187,7 +202,8 @@ class CImageSrvToken {
 			'method' 	=> 'GET',
 			'url'		=> $sReqUrl,
 			'data'		=> [
-				'appid' => $sAppID
+				'appid' => $sAppID,
+				'security' => $sSecurity
 			],
 			'version'	=> '1.0',
 			'timeout'	=> $nTimeOut
@@ -224,7 +240,7 @@ class CImageSrvToken {
 		return $nErrCode;
 	}
 
-	private function _saveFileToken( $sAppId, $arrToken, $arrFileToken )
+	private static function _saveFileToken( $sAppId, $arrToken, $arrFileToken )
 	{
 		if ( ! is_string( $sAppId ) )
 		{
@@ -247,22 +263,45 @@ class CImageSrvToken {
 		{
 			//	写入token文件中
 			$sConfigName		= '$arrFileToken';
-			$sAccessKeyId		= $arrToken[ 'AccessKeyId' ];
-			$sAccessKeySecret	= $arrToken[ 'AccessKeySecret' ];
-			$nExpiration		= $arrToken[ 'Expiration' ];
-			$sSecurityToken		= $arrToken[ 'SecurityToken' ];
 
-			$sContent         = <<<TOKENCONFIG
+			$arrFileToken[ $sAppId ] = [
+				'AccessKeyId'		=> $arrToken[ 'AccessKeyId' ],
+				'AccessKeySecret'	=> $arrToken[ 'AccessKeySecret' ],
+				'Expiration'		=> $arrToken[ 'Expiration' ],
+				'SecurityToken'		=> $arrToken[ 'SecurityToken' ]
+			];
+
+			//	添加开头
+			$sContent = <<<TOKENCONFIG
 <?php
-     $sConfigName =
-     [
-        'AccessKeyId'=>'$sAccessKeyId',
-        'AccessKeySecret'=>'$sAccessKeySecret',
-        'Expiration'=>'$nExpiration',
-        'SecurityToken'=>'$sSecurityToken'
-     ];
+	$sConfigName = [
+
 TOKENCONFIG;
-			$rFileResource    = @fopen( dirname( __FILE__ ) . '/token.php', 'w+' );
+
+			foreach ( $arrFileToken as $sAppId => $arrTokenFile )
+			{
+				$sAccessKeyId = $arrToken[ 'AccessKeyId' ];
+				$sAccessKeySecret = $arrToken[ 'AccessKeySecret' ];
+				$nExpiration = $arrToken[ 'Expiration' ];
+				$sSecurityToken = $arrToken[ 'SecurityToken' ];
+
+				$sTmpContent = <<<TOKENCONFIG
+     	'$sAppId' =>
+		 [
+			'AccessKeyId'=>'$sAccessKeyId',
+			'AccessKeySecret'=>'$sAccessKeySecret',
+			'Expiration'=>'$nExpiration',
+			'SecurityToken'=>'$sSecurityToken'
+		 ],
+TOKENCONFIG;
+
+			$sContent .= $sTmpContent . "\n";
+			}
+
+			//	 添加结尾
+			$sContent .= "\t" . '];';
+
+			$rFileResource    = @fopen( dirname( __FILE__ ) . '/../token.php', 'w+' );
 			@fwrite( $rFileResource, $sContent );
 			@fclose( $rFileResource );
 			$nErrCode = CErrCode::ERR_SUCC;
