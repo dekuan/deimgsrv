@@ -44,7 +44,7 @@ class CImageFile {
 			return CErrCode::ERR_SAVE_FILE_TO_LOC_PARA_ARR;
 		}
 
-		$sFieldName = array_key_exists( 'fieldname', $arrPara ) ? $arrPara[ 'fieldname' ] : CConst::CONST_FILE_UP_NAME;
+		$sFieldName = array_key_exists( 'fieldname', $arrPara ) ? $arrPara[ 'fieldname' ] : CDeImgConst::CONST_FILE_UP_NAME;
 		if ( ! is_string( $sFieldName ) || strlen( $sFieldName ) <= 0 )
 		{
 			return CErrCode::ERR_SAVE_FILE_TO_LOC_PARA_FIELD_NAME;
@@ -61,7 +61,7 @@ class CImageFile {
 		$cUpf = new CFileUploader();
 		$cUpf->setFieldName( $sFieldName );
 
-		$sTmpDir = CConst::CONST_FILE_UP_TMP_DIR;
+		$sTmpDir = CDeImgConst::CONST_FILE_UP_TMP_DIR;
 		if ( ! is_dir( $sTmpDir ) ) {
 			mkdir( $sTmpDir, 0777 );
 			chmod( $sTmpDir, 0755 );
