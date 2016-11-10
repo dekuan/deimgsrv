@@ -8,7 +8,8 @@ class CDeImgConst
 
 	const CONST_SRV_URI_TOKEN 			= '/gettoken';					//	img服务器获得token uri
 	const CONST_SRV_URI_IMG_URL_TO_OSS 	= '/upimgbyurl';				//	img服务器,通过给定url上传图片到oss uri
-	const CONST_SRV_URI_IMG_URL		 	= '/showimg';				//	img服务器,通过给定imgName,302到阿里oss地址
+	const CONST_SRV_URI_IMG_URL		 	= '/showimg';					//	img服务器,通过给定imgName,302到阿里oss地址
+	const CONST_SRV_URI_IMG_PROCESS		= '/imgprocess';				//	img服务器,对给定imgName的图片进行处理
 
 	const CONST_ACCESS_KEY_ID 			= 'AccessKeyId';            	//	accessKey对应key值
 	const CONST_ACCESS_KEY_SECRET 		= 'AccessKeySecret';      		//	accessKeySecret对应key值

@@ -161,6 +161,8 @@ class COSSManage {
 			{
 				$nErrCode = CErrCode::ERR_PUT_OSS_FAIL;
 			}
+
+			@unlink( $sFilePath );
 		}
 
 
