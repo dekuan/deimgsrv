@@ -10,6 +10,9 @@ use dekuan\deimgsrv\lib\COSSManage;
 use dekuan\deimgsrv\lib\CImageSrvToken;
 
 class CImgService {
+
+	const CONST_IMG_PROCESS_TYPE_CROP		= 'CROP';
+
 	public function __construct()
 	{
 	}
@@ -339,6 +342,124 @@ class CImgService {
 		else
 		{
 			$nErrCode = CErrCode::ERR_SHOW_IMG_WITH_NAME_REQUEST_NETWORK;
+		}
+
+		return $nErrCode;
+	}
+
+
+	/**
+	 * 图片处理方法
+	 * $arrPara参数说明
+	 * <li> 'appid'			: [必需]请求appId参数
+	 * <li> 'security'		: [必需]对应appId安全校验码
+	 * <li> 'filename'		: [必需]需要获取的图片名
+	 * <li> 'type'			: [必需]图片处理方式;取值范围:self::CONST_IMG_PROCESS_TYPE_*
+	 * <li> 'timeout'		: [非必需]请求超时时间,默认5秒
+	 * <li> 'url'			: [非必需]请求图片服务器url,默认:img.dekuan.org
+	 * <li> 'uri'			: [非必需]请求图片服务接口uri,默认:/imgprocess
+	 * <li> ......			: 对应不同处理,所需要的参数.
+	 *
+	 * 不同处理方法所需参数说明:
+	 * type = self::CONST_IMG_PROCESS_TYPE_CROP(截取)
+	 * <li> 'x'				: [非必需]裁剪起点横坐标,默认0
+	 * <li> 'y'				: [非必需]裁剪起点纵坐标,默认0
+	 * <li> 'w'				: [非必需]裁剪宽度,默认图片宽度,如果存在该参数,必需>=0,尽量不要大于4000
+	 * <li> 'h'				: [非必需]裁剪高度,默认图片高度,如果存在该参数,必需>=0,尽量不要大于4000
+	 *
+	 * 返回$arrRtn参数说明
+	 * <li> 'imgid'			: 对象名
+	 * <li> 'ext'			: 扩展名
+	 * <li> 'imgurl'		: 图片访问地址
+	 * <li> 'width'			: 宽度
+	 * <li> 'height'		: 高度
+	 * <li> 'mime'			: 图片mime信息
+	 *
+	 * @author wanganning
+	 * @modify-log
+	 *        name            date            reason
+	 *        王安宁			2016-11-10			创建
+	 *
+	 * @param $arrPara		array		参数列表
+	 * @param $arrRtn		array		返回信息
+	 *
+	 * @return int
+	 */
+	public static function imgProcess( $arrPara, & $arrRtn )
+	{
+		if ( ! is_array( $arrPara ) )
+		{
+			return CErrCode::ERR_IMG_PROCESS_PARA_ARR;
+		}
+
+		$sAppID = array_key_exists( 'appid', $arrPara ) ? $arrPara[ 'appid' ] : null;
+		if ( ! is_string( $sAppID ) || strlen( $sAppID ) <= 0 )
+		{
+			return CErrCode::ERR_IMG_PROCESS_PARA_APP_ID;
+		}
+
+		$sSecurity = array_key_exists( 'security', $arrPara ) ? $arrPara[ 'security' ] : null;
+		if ( ! is_string( $sSecurity ) || strlen( $sSecurity ) <= 0 )
+		{
+			return CErrCode::ERR_IMG_PROCESS_PARA_APP_SECURITY;
+		}
+
+		$sUrl = array_key_exists( 'url', $arrPara ) ? $arrPara[ 'url' ] : CDeImgConst::URL_IMG_CENTER;
+		if ( ! is_string( $sUrl ) || strlen( $sUrl ) <= 0 )
+		{
+			return CErrCode::ERR_IMG_PROCESS_PARA_URL;
+		}
+
+		$sUri = array_key_exists( 'uri', $arrPara ) ? $arrPara[ 'uri' ] : CDeImgConst::CONST_SRV_URI_IMG_PROCESS;
+		if ( ! is_string( $sUri ) || strlen( $sUri ) <= 0 )
+		{
+			return CErrCode::ERR_IMG_PROCESS_PARA_URI;
+		}
+
+		$nTimeOut = array_key_exists( 'timeout', $arrPara ) ? $arrPara[ 'timeout' ] : CDeImgConst::CONST_REQUEST_TIMEOUT_DEFAULT;
+		if ( ! is_numeric( $nTimeOut ) || $nTimeOut <= 0 )
+		{
+			return CErrCode::ERR_IMG_PROCESS_PARA_TIMEOUT;
+		}
+
+		$nErrCode = CErrCode::ERROR_UNKNOWN;
+
+		$sReqUrl = $sUrl . $sUri;
+		$arrReqPara = [
+			'method' 	=> 'GET',
+			'url'		=> $sReqUrl,
+			'data'		=> $arrPara,
+			'timeout'	=> $nTimeOut
+		];
+
+		$arrResponse = [];
+		$nErrCode = CRequest::GetInstance()->Http( $arrReqPara, $arrResponse );
+
+		if ( CErrCode::ERR_SUCC == $nErrCode )
+		{
+			if ( array_key_exists( 'errorid', $arrResponse )
+				&& array_key_exists( 'vdata', $arrResponse )
+			)
+			{
+				$nErrCode = $arrResponse[ 'errorid' ];
+				if ( CErrCode::ERR_SUCC == $nErrCode )
+				{
+					$arrRtn = $arrResponse[ 'vdata' ];
+					$nErrCode = CErrCode::ERR_SUCC;
+				}
+				else
+				{
+					$nErrCode = CErrCode::ERR_IMG_PROCESS_CENTER;
+				}
+			}
+			else
+			{
+				$nErrCode = CErrCode::ERR_IMG_PROCESS_RTN;
+			}
+		}
+		else
+		{
+			$nErrCode = CErrCode::ERR_IMG_PROCESS_NETWORK;
 		}
 
 		return $nErrCode;

@@ -86,5 +86,15 @@ class CErrCode extends CConst{
 	const ERR_SHOW_IMG_WITH_NAME					= self::ERR_BASE - 119;				//	通过图片名,显示图片,接口内部错误
 	const ERR_SHOW_IMG_WITH_NAME_RESPONSE_DATA		= self::ERR_BASE - 120;				//	通过图片名,显示图片,响应data数据错误
 	const ERR_SHOW_IMG_WITH_NAME_RES_DATA_ARR		= self::ERR_BASE - 121;				//	通过图片名,显示图片,响应data数据错误
+
+	const ERR_IMG_PROCESS_PARA_ARR					= self::ERR_BASE - 130;				//	给定图片名,处理图片,参数列表错误
+	const ERR_IMG_PROCESS_PARA_APP_ID				= self::ERR_BASE - 131;				//	给定图片名,处理图片,AppId参数错误
+	const ERR_IMG_PROCESS_PARA_APP_SECURITY			= self::ERR_BASE - 132;				//	给定图片名,处理图片,AppId对应安全码参数错误
+	const ERR_IMG_PROCESS_PARA_URL					= self::ERR_BASE - 133;				//	给定图片名,处理图片,请求url参数错误
+	const ERR_IMG_PROCESS_PARA_URI					= self::ERR_BASE - 134;				//	给定图片名,处理图片,请求uri参数错误
+	const ERR_IMG_PROCESS_PARA_TIMEOUT				= self::ERR_BASE - 135;				//	给定图片名,处理图片,请求超时时间参数错误
+	const ERR_IMG_PROCESS_CENTER					= self::ERR_BASE - 136;				//	给定图片名,处理图片,服务器内部错误
+	const ERR_IMG_PROCESS_RTN						= self::ERR_BASE - 137;				//	给定图片名,处理图片,服务器返回结果格式验证错误
+	const ERR_IMG_PROCESS_NETWORK					= self::ERR_BASE - 138;				//	给定图片名,处理图片,网络错误
 }
 

@@ -15,7 +15,7 @@ class CImageSrvTest extends TestBase
 {
 	public function testAddFileToOss()
 	{
-		$this->skipTest( TEST_SKIP & 0 );
+		$this->skipTest( TEST_SKIP );
 		$sTestName = '添加图片到Oss测试';
 
 		$arrExcept = [
@@ -53,7 +53,7 @@ class CImageSrvTest extends TestBase
 
 	public function testAddFileToOssWithAnotherID()
 	{
-		$this->skipTest( TEST_SKIP & 0 );
+		$this->skipTest( TEST_SKIP );
 		$sTestName = '添加图片到Oss测试';
 
 		$arrExcept = [
@@ -254,11 +254,58 @@ class CImageSrvTest extends TestBase
 		}
 	}
 
+
+	public function testImgProcessNormal( )
+	{
+		$this->skipTest( TEST_SKIP );
+		$sTestName = '图片正常裁剪测试';
+
+		$arrConfig = $this->_getConfig();
+
+		//	添加业务参数
+		$arrConfig[ 'filename' ] 	= 'test1.jpg';
+		$arrConfig[ 'type']			= \dekuan\deimgsrv\CImgService::CONST_IMG_PROCESS_TYPE_CROP;
+		$arrConfig[ 'x' ]			= 100;
+		$arrConfig[ 'y' ]			= 100;
+		$arrConfig[ 'w' ]			= 100;
+		$arrConfig[ 'h' ]			= 100;
+		$arrConfig[ 'newname' ]		= 'composer_normal_test.jpg';
+
+		$arrExcept = [
+			'imgid'  => 'composer_normal_test.jpg',
+			'ext'    => '.jpg',
+			'imgurl' => 'http://deimage.dekuan.org/composer_normal_test.jpg',
+			'width'  => 100,
+			'height' => 100,
+			'mime'   => 'image/jpeg'
+		];
+
+		$arrRtn = [];
+		$nErrCode = \dekuan\deimgsrv\CImgService::imgProcess( $arrConfig, $arrRtn );
+
+		if ( \dekuan\deimgsrv\lib\CErrCode::ERROR_SUCCESS == $nErrCode )
+		{
+			$bExcept = $this->mySeeJson( $arrRtn, $arrExcept );
+			if ( $bExcept )
+			{
+				$this->echoTestResult( true, $sTestName );
+			}
+			else
+			{
+				$this->echoTestResult( false, $sTestName, '预期错误;', $arrExcept, $arrRtn );
+			}
+		}
+		else
+		{
+			$this->echoTestResult( false, $sTestName, '错误码:' . $nErrCode, \dekuan\deimgsrv\lib\CErrCode::ERROR_SUCCESS, $nErrCode );
+		}
+	}
+
 	private function _getConfig()
 	{
 		return [
-			'appid'       => '',
-			'security'    => '',
+			'appid'       => 'd41d8cd98f00b204e9800998ecf8427e',
+			'security'    => '4e2dd4d1df02ad706b5e02cdb6c25290',
 			'fieldname'   => 'dekuanfile',
 			'bucket'      => 'deimage',
 			'bktinnerurl' => 'oss-cn-beijing-internal.aliyuncs.com',
